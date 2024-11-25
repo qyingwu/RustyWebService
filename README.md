@@ -35,3 +35,29 @@ The server will start on `http://localhost:3000`
 You can test the server using curl or your web browser:
 
 curl http://localhost:3000/health
+
+
+
+## Starting the Teacher Service
+
+1. Navigate to the project directory:
+cd ws/webservice
+
+2. Start the service using cargo:
+cargo run --bin teacher-service
+
+
+The service will start on `http://127.0.0.1:3000` by default.
+
+### Available Endpoints
+
+- Health Check: `GET /health`
+- Create Course: `POST /courses/`
+  ```json
+  {
+    "teacher_id": 1,
+    "name": "Course Name"
+  }
+  ```
+
+
