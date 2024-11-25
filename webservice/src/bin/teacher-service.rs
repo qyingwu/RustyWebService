@@ -1,6 +1,10 @@
 use actix_web::{web, App, HttpServer};
 use std::io;
 use std::sync::Mutex;
+use dotenv::dotenv;
+use std::env;
+use sqlx::postgres::PgPoolOptions;
+
 
 #[path = "../handlers.rs"]
 mod handlers;
@@ -16,10 +20,18 @@ use state::AppState;
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
+    dotenv().ok();
+
+    //panic in case not able to read url
+    let databse_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set.");
+    let db_pool = PgPoolOptions::new().connect(&databse_url).await.unwrap();
+
+
     let shared_data = web::Data::new(AppState {
         health_check_response: "I'm OK.".to_string(),
         visit_count: Mutex::new(0),
-        courses: Mutex::new(vec![]),
+        //courses: Mutex::new(vec![]),
+        db: db_pool,
     });
 
     //move forces the closure to take ownership of 
