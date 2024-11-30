@@ -3,7 +3,7 @@ use actix_web::{web, HttpResponse};
 use crate::db_access::get_courses_for_teacher_db;
 use crate::db_access::post_new_course_db;
 use crate::db_access::get_course_details_db;
-
+use super::errors::MyError;
 
 
 pub async fn health_check_handler(
@@ -43,10 +43,11 @@ pub async fn new_course(
 pub async fn get_courses_for_teacher(
     app_state: web::Data<AppState>,
     params: web::Path<(i32,)>,
-) -> HttpResponse {
+) -> Result<HttpResponse, MyError> {
     let teacher_id = params.into_inner().0;
-    let courses = get_courses_for_teacher_db(&app_state.db, teacher_id).await;
-    HttpResponse::Ok().json(courses)
+    get_courses_for_teacher_db(&app_state.db, teacher_id)
+    .await
+    .map(|courses| HttpResponse::Ok().json(courses))
 }
 
 pub async fn get_course_detail(
@@ -113,7 +114,7 @@ mod tests {
         });
 
         let teacher_id: web::Path<(i32,)> = web::Path::from((1,));
-        let resp = get_courses_for_teacher(app_state, teacher_id).await;
+        let resp = get_courses_for_teacher(app_state, teacher_id).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }
 

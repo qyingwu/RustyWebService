@@ -1,7 +1,10 @@
 use super::models::*;
 use sqlx::postgres::PgPool;
+use super::errors::MyError;
 
-pub async fn get_courses_for_teacher_db(pool: &PgPool, teacher_id:i32) -> Vec<Course> {
+
+
+pub async fn get_courses_for_teacher_db(pool: &PgPool, teacher_id:i32) -> Result<Vec<Course>, MyError> {
     //$ means var teacher_id
     
     let rows = sqlx::query!(
@@ -15,20 +18,25 @@ pub async fn get_courses_for_teacher_db(pool: &PgPool, teacher_id:i32) -> Vec<Co
         teacher_id
     )
     .fetch_all(pool) //check multiple 
-    .await.unwrap();
+    .await?; //use error handler to handle error
 
     // $1 is a PostgreSQL parameter placeholder
     // The actual value that replaces $1
 
     //map course 
-    rows.iter()
+    let courses: Vec<Course> = rows.iter()
         .map(|r| Course {
             id: Some(r.id),
             teacher_id: r.teacher_id,
             name: r.name.clone(),
             time: r.time.map(|t| t.naive_utc()),  // Convert DateTime<Utc> to NaiveDateTime
         })
-        .collect()
+        .collect();
+    
+    match courses.len() {
+        0 => Err(MyError::NotFound("Courses not found for teacher".into())),
+        _ => Ok(courses),
+    }
 }
 
 
